@@ -35,11 +35,11 @@
                     <img :src="avatars[p.avatar as number]" class="w-14 border rounded-full" />
                     <div class="ml-12 font-semibold">
                         {{ p.username }}
-                        <b class="text-xl text-center" v-if="p.roomOwner">👑</b>
+                        <b class="text-xl text-center" v-if="p.id === _room.roomOwner?.id">👑</b>
                     </div>
                 </div>
                 <div class="flex justify-center">
-                    <CustomButton v-if="_room.mainPlayer.roomOwner" class="max-w-40" label="Start game" type="save"
+                    <CustomButton v-if="_room.mainPlayer.id === _room.roomOwner?.id" class="max-w-40" label="Start game" type="save"
                         @click="startGame" />
                     <span v-else class="text-lg font-semibold">The room leader will start the game soon.</span>
                 </div>

@@ -4,7 +4,6 @@ import { socket } from "~/socket";
 export type Player = {
     id?: string,
     username?: string,
-    roomOwner: boolean,
     avatar?: number
 }
 
@@ -13,6 +12,7 @@ export type Room = {
     enterRoomId: string | undefined,
     mainPlayer: Player,
     players: Array<Player>,
+    roomOwner?: Player
 }
 
 const _initialState: Room = {
@@ -22,9 +22,9 @@ const _initialState: Room = {
         id: undefined,
         username: undefined,
         avatar: undefined,
-        roomOwner: false
     },
-    players: []
+    players: [],
+    roomOwner: undefined
 }
 
 export const copyRoomCodeToClipboard = () => {
@@ -36,7 +36,7 @@ export const createRoom = () => {
 };
 socket.on('room-created', room => {
     _room.id = room.id;
-    _room.mainPlayer.roomOwner = room.mainPlayer.roomOwner;
+    _room.roomOwner = room.roomOwner;
 });
 
 export const joinRoom = () => {
@@ -44,7 +44,9 @@ export const joinRoom = () => {
 };
 socket.on('player-joined', room => {
     _room.id = room.id;
+    console.log('dale',room)
     _room.players = room.players;
+    _room.roomOwner = room.roomOwner;
 });
 
 socket.on('disconnect', () => {
@@ -53,7 +55,6 @@ socket.on('disconnect', () => {
     _room.mainPlayer = {
         id: undefined,
         username: undefined,
-        roomOwner: false,
         avatar: undefined
     },
     _room.players = [];
