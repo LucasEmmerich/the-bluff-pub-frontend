@@ -44,8 +44,7 @@ export type Card = {
 };
 
 export type Hand = {
-    username: string,
-    avatar: number,
+    player: Player,
     hand: Array<Card>,
     life: number
 };
@@ -85,12 +84,12 @@ const _initialState: Game = {
 
 export const startGame = () => {
     shuffleCards();
-    socket.emit('game-start', _room, _game);
+    socket.emit('game-start', { room: _room, game: _game });
 };
 
 export const champion = () => {
     const playersAlive = _game.hands.filter(h => h.life);
-    return playersAlive.length === 1 ? playersAlive[0].username : undefined;
+    return playersAlive.length === 1 ? playersAlive[0].player.username : undefined;
 };
 
 export const shuffleCards = () => {
@@ -103,7 +102,7 @@ export const shuffleCards = () => {
 
 export const selectCard = (card: Card) => {
     if (_room.mainPlayer.username !== _game.turn) return;
-    _game.hands.find(x => x.username === _room.mainPlayer.username)?.hand?.forEach(x => {
+    _game.hands.find(x => x.player.id === _room.mainPlayer.id)?.hand?.forEach(x => {
         if (card.id === x.id) {
             x.selected = !x.selected
         }
@@ -112,8 +111,8 @@ export const selectCard = (card: Card) => {
 export const dropCards = (callLiar: boolean) => {
     shuffleCards();
     const move = {
-        cardsDropped: _game.hands.find(x => x.username === _room.mainPlayer.username)?.hand?.filter(x => x.selected),
-        cardsLeft: _game.hands.find(x => x.username === _room.mainPlayer.username)?.hand?.filter(x => !x.selected),
+        cardsDropped: _game.hands.find(x => x.player.id === _room.mainPlayer.id)?.hand?.filter(x => x.selected),
+        cardsLeft: _game.hands.find(x => x.player.id === _room.mainPlayer.id)?.hand?.filter(x => !x.selected),
         callLiar
     }
     dropCardsAnimation(_game, () => socket.emit('drop-cards', _room, _game, move));
@@ -127,16 +126,16 @@ export const handPosition = (pl: Hand) => {
         `top-10 left-[calc(50%-50px)] rotate-180`,
         `right-10 top-[calc(50%-50px)] rotate-[-90deg]`
     ]
-    if (pl.username === _room.mainPlayer.username) {
+    if (pl.player.id === _room.mainPlayer.id) {
         return handPositionClasses[0];
     } else {
-        const index = _game.hands.findIndex(x => x.username === _room.mainPlayer.username);
+        const index = _game.hands.findIndex(x => x.player.id === _room.mainPlayer.id);
         const leftPositions = handPositionClasses.slice(3);
         return leftPositions[index + 1] || leftPositions[0];
     }
 };
 export const orderPlayerTablePosition = (hands: Array<Hand>) => {
-    const index = hands.findIndex(x => x.username === _room.mainPlayer.username);
+    const index = hands.findIndex(x => x.player.id === _room.mainPlayer.id);
     return [...hands.slice(index + 1), ...hands.slice(0, index + 1)];
 };
 socket.on('game-started', game => {
@@ -157,7 +156,7 @@ const tableCardsAnimation = (table: any) => {
     document.getElementById('table-cards')?.classList.add('fade-in')
 }
 const dropCardsAnimation = (game: Game, cb: () => void) => {
-    const playerHand = game.hands.find(x => x.username === _game.turn)?.hand;
+    const playerHand = game.hands.find(x => x.player.username === _game.turn)?.hand;
     const cardsElements: Array<any> = [];
     playerHand?.forEach(c => {
         if (c.selected) {

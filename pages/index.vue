@@ -52,7 +52,7 @@
                     <div class="flex justify-center mb-2 bg-gray-900 rounded-md">
                         <span v-for="l in playerCards.life">💖&nbsp;</span>
                     </div>
-                    <div class="flex" v-if="playerCards.username === _room.mainPlayer.username">
+                    <div class="flex" v-if="playerCards.player.id === _room.mainPlayer.id">
                         <div class="flex justify-center items-center space-x-[-60px]" id="hands-cards">
                             <img v-for="(card, i) in playerCards.hand" :key="i" @click="() => selectCard(card)"
                                 :id="`card-${card.id}`" :src="card.img"
@@ -68,8 +68,8 @@
                                 :style="{ transform: `rotate(${[-15, -7.5, 0, 7.5, 15][i]}deg)` }" />
                         </div>
                     </div>
-                    <div v-if="playerCards.username === _game.turn" class="flex pt-5 justify-center flex-row">
-                        <div v-if="playerCards.username === _room.mainPlayer.username" class="flex flex-row">
+                    <div v-if="playerCards.player.username === _game.turn" class="flex pt-5 justify-center flex-row">
+                        <div v-if="playerCards.player.id === _room.mainPlayer.id" class="flex flex-row">
                             <CustomButton label="Liar" type="cancel" v-if="_game.table.cards.length > 0"
                                 @click="() => dropCards(true)" />
                             <CustomButton label="Drop" type="save" @click="() => dropCards(false)" />

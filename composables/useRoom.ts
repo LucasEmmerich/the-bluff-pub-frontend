@@ -36,6 +36,7 @@ export const createRoom = () => {
 };
 socket.on('room-created', room => {
     _room.id = room.id;
+    _room.mainPlayer.id = room.roomOwner.id;
     _room.roomOwner = room.roomOwner;
 });
 
