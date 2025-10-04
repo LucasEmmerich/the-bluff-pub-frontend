@@ -124,8 +124,9 @@ onMounted(() => {
 const onPlayerDisconected = () => {
     socket.emit('left-room', _room);
 }
-socket.on('player-left', (players, leftPlayer) => {
-    _room.players = players;
+socket.on('player-left', (room, leftPlayer) => {
+    _room.players = room.players;
+    _room.roomOwner = room.roomOwner;
     notifyLocally('info', `${leftPlayer.username} saiu da sala!`);
 });
 

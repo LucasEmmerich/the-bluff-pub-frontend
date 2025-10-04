@@ -44,7 +44,6 @@ export const joinRoom = () => {
 };
 socket.on('player-joined', room => {
     _room.id = room.id;
-    console.log('dale',room)
     _room.players = room.players;
     _room.roomOwner = room.roomOwner;
 });
