@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 export const state = reactive({
   connected: false
 });
-const URL = 'http://localhost:3001'
+const URL = import.meta.env.NUXT_PUBLIC_API_URL ?? 'http://localhost:3001'
 
 export const socket = io(URL);
 socket.on("connect", () => {

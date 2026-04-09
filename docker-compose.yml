@@ -1,0 +1,14 @@
+services:
+  bluff-pub-frontend:
+    build: .
+    container_name: bluff-pub-frontend
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      NUXT_PUBLIC_API_URL: ""
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    external: true
