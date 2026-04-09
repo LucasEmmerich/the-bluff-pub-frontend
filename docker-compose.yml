@@ -3,12 +3,11 @@ services:
     build:
       context: .
       args:
-        NUXT_PUBLIC_API_URL: ""
+        VITE_SOCKET_URL: ""
     container_name: bluff-pub-frontend
     restart: unless-stopped
     environment:
       PORT: 3000
-      NUXT_PUBLIC_API_URL: ""
     networks:
       - app_network
 

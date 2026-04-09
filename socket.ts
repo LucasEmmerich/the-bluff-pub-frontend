@@ -5,7 +5,7 @@ export const state = reactive({
   connected: false
 });
 
-const url = import.meta.env.NUXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const url = (import.meta.env.VITE_SOCKET_URL !== undefined ? import.meta.env.VITE_SOCKET_URL : 'http://localhost:3001');
 export const socket = io(url);
 
 socket.on("connect", () => { state.connected = true; });
