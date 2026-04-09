@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-slate-100">
+  <div class="min-h-screen bg-pub-bg font-body">
     <NuxtLayout name="server-status" />
     <NuxtPage />
   </div>

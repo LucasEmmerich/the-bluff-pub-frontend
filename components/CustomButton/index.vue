@@ -1,23 +1,26 @@
 <template>
-    <button v-bind="$attrs" type="button" :class="classes + 'h-min w-full rounded-md focus:shadow-none py-2 px-4 border border-transparent text-center text-sm text-white transition-all shadow-md hover:shadow-lg active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none ml-2'">
-        <slot />
-        {{ label }}
+    <button v-bind="$attrs" type="button" :class="[baseClasses, typeClasses]">
+        <slot />{{ label }}
     </button>
 </template>
+
 <script setup lang="ts">
 type Props = {
-    type: 'save' | 'info' | 'cancel',
+    type: 'save' | 'info' | 'cancel'
     label: string
 }
 const props = defineProps<Props>()
-const classes = computed(() => {
+
+const baseClasses = 'font-pub text-sm font-semibold tracking-widest uppercase px-4 py-2 rounded transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed h-min w-full border'
+
+const typeClasses = computed(() => {
     switch (props.type) {
         case 'save':
-            return 'bg-green-600 focus:bg-green-700 active:bg-green-700 hover:bg-green-700 '
+            return 'bg-emerald-900 border-emerald-600 text-emerald-200 hover:bg-emerald-800 hover:border-emerald-400 hover:text-white'
         case 'cancel':
-            return 'bg-red-600 focus:bg-red-700 active:bg-red-700 hover:bg-red-700 '
+            return 'bg-red-950 border-red-700 text-red-300 hover:bg-red-900 hover:border-red-500 hover:text-white'
         default:
-            return 'bg-blue-600 focus:bg-blue-700 active:bg-blue-700 hover:bg-blue-700 '
+            return 'bg-pub-wood-mid border-pub-gold text-pub-gold hover:bg-pub-wood-light hover:text-pub-gold-bright'
     }
 })
 </script>
