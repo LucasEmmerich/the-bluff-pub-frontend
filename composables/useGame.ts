@@ -215,6 +215,8 @@ const triggerLifeLoss = (loserId: string) => {
     }
 };
 
+export const dealingActive = ref(false);
+
 export const turnTimeLeft = ref(20);
 let _timerInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -245,7 +247,10 @@ socket.on('game-started', game => {
     _game.cardType = game.cardType;
     gameLogs.splice(0, gameLogs.length);
     addLog({ type: 'round', text: 'Partida iniciada', sub: `${game.hands.length} jogadores` });
-    startCountdown();
+    dealingActive.value = true;
+    const totalCards = 5 * game.hands.length;
+    const dealDuration = 200 + (totalCards - 1) * 180 + 750 + 400;
+    setTimeout(() => { dealingActive.value = false; startCountdown(); }, dealDuration);
 });
 
 socket.on('cards-dropped', game => {

@@ -2,6 +2,8 @@
     <div class="flex-1 relative overflow-hidden"
         style="background: radial-gradient(ellipse at 50% 30%, #1e0e06 0%, #0a0603 65%);">
 
+        <DealingAnimation />
+
         <Transition name="vignette">
             <div v-if="vignetteActive" class="absolute inset-0 pointer-events-none z-50"
                 style="box-shadow: inset 0 0 120px rgba(220,38,38,0.55);"></div>
@@ -51,11 +53,16 @@
                         :style="`--rot: ${(i - (_game.table.cards.length - 1) / 2) * 6}deg; animation-delay: ${i * 80}ms`" />
                 </div>
 
-                <PlayerHand v-for="(playerCards, i) in _game.hands" :key="i"
-                    :playerCards="playerCards"
-                    :isMainPlayer="playerCards.player.id === _room.mainPlayer.id"
-                    :isCurrentTurn="playerCards.player.username === _game.turn"
-                    :hasTableCards="_game.table.cards.length > 0" />
+                <Transition name="hands-reveal">
+                    <div v-show="!dealingActive" class="absolute inset-0 pointer-events-none">
+                        <PlayerHand v-for="(playerCards, i) in _game.hands" :key="i"
+                            :playerCards="playerCards"
+                            :isMainPlayer="playerCards.player.id === _room.mainPlayer.id"
+                            :isCurrentTurn="playerCards.player.username === _game.turn"
+                            :hasTableCards="_game.table.cards.length > 0"
+                            style="pointer-events: all;" />
+                    </div>
+                </Transition>
             </div>
 
         </div>
@@ -97,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { champion, startGame, CARD_IMAGES, turnTimeLeft, vignetteActive } from "~/composables/useGame";
+import { champion, startGame, CARD_IMAGES, turnTimeLeft, vignetteActive, dealingActive } from "~/composables/useGame";
 
 const _game = useGame();
 const _room = useRoom();
@@ -108,4 +115,8 @@ const _room = useRoom();
 .vignette-leave-active { transition: opacity 0.85s ease; }
 .vignette-enter-from, .vignette-leave-to { opacity: 0; }
 .vignette-enter-to, .vignette-leave-from { opacity: 1; }
+
+.hands-reveal-enter-active { transition: opacity 0.6s ease 0.3s; }
+.hands-reveal-enter-from { opacity: 0; }
+.hands-reveal-enter-to { opacity: 1; }
 </style>
