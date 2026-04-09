@@ -1,6 +1,9 @@
 services:
   bluff-pub-frontend:
-    build: .
+    build:
+      context: .
+      args:
+        NUXT_PUBLIC_API_URL: ""
     container_name: bluff-pub-frontend
     restart: unless-stopped
     environment:
