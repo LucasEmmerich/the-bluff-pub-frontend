@@ -55,7 +55,7 @@
 
                 <Transition name="hands-reveal">
                     <div v-show="!dealingActive" class="absolute inset-0 pointer-events-none">
-                        <PlayerHand v-for="(playerCards, i) in _game.hands" :key="i"
+                        <PlayerHand v-for="playerCards in _game.hands" :key="playerCards.player.id"
                             :playerCards="playerCards"
                             :isMainPlayer="playerCards.player.id === _room.mainPlayer.id"
                             :isCurrentTurn="playerCards.player.username === _game.turn"

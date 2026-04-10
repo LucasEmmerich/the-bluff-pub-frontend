@@ -74,30 +74,39 @@ const OTHER_ANGLES: Record<number, number[]> = {
     5: [180, 225, 315, 360],
 };
 
+const isSpectator = () => !_game.hands.some(h => h.player.id === _room.mainPlayer.id);
+
 export const handPosition = (pl: Hand): Record<string, string> => {
     if (pl.player.id === _room.mainPlayer.id) {
         return { left: '50%', top: '88%', transform: 'translate(-50%, -50%)' };
     }
 
     const total = _game.hands.length;
-    const others = _game.hands.filter(x => x.player.id !== _room.mainPlayer.id);
-    const otherIndex = others.findIndex(x => x.player.id === pl.player.id);
-    const angles = OTHER_ANGLES[total] ?? OTHER_ANGLES[5];
-    const deg = angles[otherIndex] ?? 270;
+    const spectator = isSpectator();
+    const pool = spectator ? _game.hands : _game.hands.filter(x => x.player.id !== _room.mainPlayer.id);
+    const idx = pool.findIndex(x => x.player.id === pl.player.id);
+    const angleKey = spectator ? total + 1 : total;
+    const angles = OTHER_ANGLES[angleKey] ?? OTHER_ANGLES[5];
+    const deg = angles[idx] ?? 270;
 
     const rad = (deg * Math.PI) / 180;
-    const x = 50 + 40 * Math.cos(rad);
-    const y = 50 + 40 * Math.sin(rad);
-
-    return { left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' };
+    return {
+        left: `${50 + 40 * Math.cos(rad)}%`,
+        top: `${50 + 40 * Math.sin(rad)}%`,
+        transform: 'translate(-50%, -50%)',
+    };
 };
 
 export const handRotation = (pl: Hand): number => {
     if (pl.player.id === _room.mainPlayer.id) return 0;
-    const others = _game.hands.filter(x => x.player.id !== _room.mainPlayer.id);
-    const otherIndex = others.findIndex(x => x.player.id === pl.player.id);
-    const angles = OTHER_ANGLES[_game.hands.length] ?? OTHER_ANGLES[4];
-    const deg = angles[otherIndex] ?? 270;
+
+    const total = _game.hands.length;
+    const spectator = isSpectator();
+    const pool = spectator ? _game.hands : _game.hands.filter(x => x.player.id !== _room.mainPlayer.id);
+    const idx = pool.findIndex(x => x.player.id === pl.player.id);
+    const angleKey = spectator ? total + 1 : total;
+    const angles = OTHER_ANGLES[angleKey] ?? OTHER_ANGLES[5];
+    const deg = angles[idx] ?? 270;
     return deg - 90;
 };
 
@@ -245,6 +254,7 @@ socket.on('game-started', game => {
     _game.hands = remapHandImages(orderPlayerTablePosition(game.hands));
     _game.matchStarted = game.matchStarted;
     _game.cardType = game.cardType;
+    _game.table = { cards: [], moves: [] };
     gameLogs.splice(0, gameLogs.length);
     addLog({ type: 'round', text: 'Partida iniciada', sub: `${game.hands.length} jogadores` });
     dealingActive.value = true;
@@ -316,6 +326,12 @@ socket.on('turn-timeout', ({ game, result }: { game: any, result: BluffResult })
     _game.matchStarted = !result.gameOver;
     _bluffResultHandlers.forEach(h => h(result));
     if (!result.gameOver) startCountdown(4000);
+});
+
+socket.on('turn-skipped', game => {
+    _game.turn = game.turn?.username ?? game.turn;
+    _game.hands = remapHandImages(orderPlayerTablePosition(game.hands));
+    startCountdown();
 });
 
 socket.on('disconnect', () => {

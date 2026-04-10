@@ -67,7 +67,7 @@
         <div v-if="isCurrentTurn && isMainPlayer" class="flex gap-1 mt-1">
             <CustomButton v-if="hasTableCards" label="Mentira!" type="cancel"
                 @click="() => dropCards(true)" />
-            <CustomButton label="Jogar" type="save"
+            <CustomButton v-if="!mustCallBluff" label="Jogar" type="save"
                 :disabled="!playerCards.cards.some(c => c.selected)"
                 @click="() => dropCards(false)" />
         </div>
@@ -77,7 +77,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { CARD_IMAGES, selectCard, dropCards, handPosition, handRotation, lifeEvents } from "~/composables/useGame";
+import { CARD_IMAGES, selectCard, dropCards, handPosition, handRotation, lifeEvents, _game } from "~/composables/useGame";
 import { avatars } from "~/assets/avatars";
 import gunImg from "~/assets/gun.svg";
 import type { Hand } from "~/types";
@@ -90,6 +90,15 @@ const props = defineProps<{
 }>()
 
 const activeLifeEvent = computed(() => lifeEvents.find(e => e.playerId === props.playerCards.player.id));
+
+const mustCallBluff = computed(() => {
+    if (!props.isCurrentTurn || !props.isMainPlayer || !props.hasTableCards) return false;
+    if (_game.hands.length !== 2) return false;
+    const lastMove = _game.table.moves[_game.table.moves.length - 1];
+    if (!lastMove) return false;
+    const lastMoverHand = _game.hands.find(h => h.player.id === lastMove.player.id);
+    return (lastMoverHand?.cards.length ?? 1) === 0;
+});
 
 const cardMarginTop = computed(() => {
     if (props.isMainPlayer) return '0px';
