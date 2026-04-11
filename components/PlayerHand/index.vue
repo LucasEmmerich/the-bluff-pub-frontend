@@ -2,17 +2,77 @@
     <div class="absolute flex flex-col items-center"
         :style="{ ...handPosition(playerCards), filter: isCurrentTurn ? 'drop-shadow(0 0 18px rgba(212,168,32,0.9)) drop-shadow(0 0 6px rgba(212,168,32,0.6))' : undefined, gap: '2px' }">
 
-        <div class="flex items-center gap-2 relative">
-            <div class="font-pub text-xs tracking-widest px-2 py-0.5 rounded"
-                :style="isCurrentTurn
-                    ? 'background: rgba(184,134,11,0.25); border: 1px solid rgba(184,134,11,0.6); color: #f0c040;'
-                    : 'background: rgba(0,0,0,0.5); border: 1px solid rgba(184,134,11,0.15); color: #c4a882;'">
-                {{ playerCards.player.username }}
+        <div class="relative flex flex-col items-center">
+
+            <div v-if="showCircle" class="relative w-36 h-36">
+
+                <div class="w-full h-full rounded-full overflow-hidden shadow-2xl"
+                    :class="isCurrentTurn ? 'ring-[3px] ring-pub-gold animate-pulse-gold' : 'ring-2 ring-pub-gold/40'"
+                    :style="isCurrentTurn ? 'box-shadow: 0 0 20px rgba(212,168,32,0.8)' : ''">
+                    <VideoTile v-if="activeStream" :stream="activeStream" :mirror="isMainPlayer" />
+                    <img v-else :src="avatars[Number(playerCards.player.avatar)]"
+                        class="w-full h-full object-cover" />
+                </div>
+
+                <div v-if="!isMainPlayer && enabledPeers.has(playerCards.player.id) && !activeStream"
+                    class="absolute inset-0 rounded-full flex items-center justify-center"
+                    style="background: rgba(0,0,0,0.5);">
+                    <span class="text-pub-gold/70 text-xs font-pub animate-pulse">conectando...</span>
+                </div>
+
+                <div class="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none">
+                    <div class="font-pub text-xs tracking-widest px-2 py-0.5 rounded"
+                        :style="isCurrentTurn
+                            ? 'background: rgba(20,10,0,0.8); border: 1px solid rgba(184,134,11,0.6); color: #f0c040;'
+                            : 'background: rgba(0,0,0,0.75); border: 1px solid rgba(184,134,11,0.2); color: #c4a882;'">
+                        {{ playerCards.player.username }}
+                    </div>
+                </div>
+
+                <div v-if="isMainPlayer" class="absolute top-1 right-1 flex gap-1">
+                    <template v-if="isEnabled">
+                        <button @click="toggleMute"
+                            class="w-7 h-7 rounded-full flex items-center justify-center text-xs shadow-lg"
+                            :style="isMuted
+                                ? 'background: rgba(220,38,38,0.9); border: 1px solid rgba(220,38,38,0.6);'
+                                : 'background: rgba(0,0,0,0.85); border: 1px solid rgba(184,134,11,0.4);'">
+                            {{ isMuted ? '🔇' : '🎙️' }}
+                        </button>
+                        <button @click="toggleCam"
+                            class="w-7 h-7 rounded-full flex items-center justify-center text-xs shadow-lg"
+                            :style="isCamOff
+                                ? 'background: rgba(220,38,38,0.9); border: 1px solid rgba(220,38,38,0.6);'
+                                : 'background: rgba(0,0,0,0.85); border: 1px solid rgba(184,134,11,0.4);'">
+                            {{ isCamOff ? '📵' : '📷' }}
+                        </button>
+                        <button @click="disable"
+                            class="w-7 h-7 rounded-full flex items-center justify-center text-xs shadow-lg"
+                            style="background: rgba(220,38,38,0.85); border: 1px solid rgba(220,38,38,0.5);">
+                            ✖
+                        </button>
+                    </template>
+                    <button v-else @click="enable"
+                        class="w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-lg"
+                        style="background: rgba(0,0,0,0.85); border: 1px solid rgba(184,134,11,0.4);">
+                        📷
+                    </button>
+                </div>
+
             </div>
-            <img :src="avatars[Number(playerCards.player.avatar)]"
-                class="w-8 h-8 rounded-full shadow-lg shrink-0"
-                :class="isCurrentTurn ? 'ring-2 ring-pub-gold animate-pulse-gold' : 'ring-2 ring-pub-gold/40'"
-                :style="isCurrentTurn ? 'box-shadow: 0 0 14px rgba(212,168,32,0.8)' : ''" />
+
+            <div v-else class="flex items-center gap-2">
+                <div class="font-pub text-xs tracking-widest px-2 py-0.5 rounded"
+                    :style="isCurrentTurn
+                        ? 'background: rgba(184,134,11,0.25); border: 1px solid rgba(184,134,11,0.6); color: #f0c040;'
+                        : 'background: rgba(0,0,0,0.5); border: 1px solid rgba(184,134,11,0.15); color: #c4a882;'">
+                    {{ playerCards.player.username }}
+                </div>
+                <img :src="avatars[Number(playerCards.player.avatar)]"
+                    class="w-8 h-8 rounded-full shadow-lg shrink-0"
+                    :class="isCurrentTurn ? 'ring-2 ring-pub-gold animate-pulse-gold' : 'ring-2 ring-pub-gold/40'"
+                    :style="isCurrentTurn ? 'box-shadow: 0 0 14px rgba(212,168,32,0.8)' : ''" />
+            </div>
+
             <div v-if="activeLifeEvent" class="pointer-events-none select-none"
                 style="position: absolute; left: 100%; top: 50%; transform: translateY(-50%); z-index: 100;">
                 <div class="gun-shoot" style="position: relative; display: inline-block;">
@@ -78,6 +138,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { CARD_IMAGES, selectCard, dropCards, handPosition, handRotation, lifeEvents, _game } from "~/composables/useGame";
+import { localStream, peers, enabledPeers, isEnabled, isMuted, isCamOff, enableWebRTC, disableWebRTC, toggleMute, toggleCam } from "~/composables/useWebRTC";
 import { avatars } from "~/assets/avatars";
 import gunImg from "~/assets/gun.svg";
 import type { Hand } from "~/types";
@@ -88,6 +149,20 @@ const props = defineProps<{
     isCurrentTurn: boolean
     hasTableCards: boolean
 }>()
+
+const _room = useRoom();
+
+const showCircle = computed(() =>
+    props.isMainPlayer || enabledPeers.has(props.playerCards.player.id)
+);
+
+const activeStream = computed<MediaStream | null>(() => {
+    if (props.isMainPlayer) return localStream.value;
+    return peers[props.playerCards.player.id]?.stream ?? null;
+});
+
+const enable = () => { if (_room.id) enableWebRTC(_room.id); };
+const disable = () => { if (_room.id) disableWebRTC(_room.id); };
 
 const activeLifeEvent = computed(() => lifeEvents.find(e => e.playerId === props.playerCards.player.id));
 
