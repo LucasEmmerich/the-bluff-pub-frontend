@@ -35,7 +35,13 @@ const createPeer = (remoteId: string): RTCPeerConnection => {
     };
 
     pc.ontrack = ({ streams }) => {
-        if (peers[remoteId]) peers[remoteId].stream = streams[0];
+        if (!peers[remoteId]) return;
+        peers[remoteId].stream = streams[0];
+        streams[0].onremovetrack = () => {
+            if (peers[remoteId] && streams[0].getTracks().length === 0) {
+                peers[remoteId].stream = null;
+            }
+        };
     };
 
     peers[remoteId] = { connection: pc, stream: null };
@@ -51,7 +57,9 @@ const closePeer = (id: string) => {
 export const enableWebRTC = async (roomId: string) => {
     try {
         localStream.value = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        localStream.value.getAudioTracks().forEach(t => { t.enabled = false; });
         isEnabled.value = true;
+        isMuted.value = true;
 
         for (const [remoteId, entry] of Object.entries(peers)) {
             const pc = entry.connection;
@@ -71,14 +79,23 @@ export const enableWebRTC = async (roomId: string) => {
     }
 };
 
-export const disableWebRTC = (roomId: string) => {
+export const disableWebRTC = async (_roomId: string) => {
     localStream.value?.getTracks().forEach(t => t.stop());
     localStream.value = null;
-    Object.keys(peers).forEach(closePeer);
     isEnabled.value = false;
     isMuted.value = false;
     isCamOff.value = false;
-    socket.emit('webrtc-leave', { roomId });
+
+    for (const [remoteId, entry] of Object.entries(peers)) {
+        const pc = entry.connection;
+        if (pc.signalingState === 'closed') continue;
+        pc.getSenders().filter(s => s.track).forEach(s => pc.removeTrack(s));
+        try {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            socket.emit('webrtc-offer', { to: remoteId, offer });
+        } catch { /* ignore */ }
+    }
 };
 
 export const toggleMute = () => {
@@ -95,7 +112,8 @@ if (import.meta.client) {
 
 socket.on('webrtc-user-joined', async ({ from }: { from: string }) => {
     enabledPeers.add(from);
-    if (peers[from]?.stream) return;
+    const existing = peers[from];
+    if (existing && existing.connection.signalingState !== 'closed') return;
     const pc = createPeer(from);
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);

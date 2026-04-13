@@ -36,7 +36,10 @@
                             :style="isMuted
                                 ? 'background: rgba(220,38,38,0.9); border: 1px solid rgba(220,38,38,0.6);'
                                 : 'background: rgba(0,0,0,0.85); border: 1px solid rgba(184,134,11,0.4);'">
-                            {{ isMuted ? '🔇' : '🎙️' }}
+                            <span class="relative inline-flex">
+                                🎙️
+                                <span v-if="isMuted" class="muted-slash" />
+                            </span>
                         </button>
                         <button @click="toggleCam"
                             class="w-7 h-7 rounded-full flex items-center justify-center text-xs shadow-lg"
@@ -100,12 +103,13 @@
                 :id="`card-${card.id}`"
                 :src="card.img"
                 @click="() => selectCard(card)"
-                class="w-16 h-24 rounded-md shadow-xl transition-all duration-200 cursor-pointer ring-1 ring-black/40"
-                :class="card.selected ? 'ring-2 ring-blue-400 shadow-blue-500/40 shadow-xl' : 'hover:ring-pub-gold/30'"
+                class="card-item w-16 h-24 rounded-md shadow-xl cursor-pointer ring-1 ring-black/40"
+                :class="card.selected ? 'card-selected ring-2 ring-pub-gold shadow-xl' : ''"
                 :style="`
+                    --rot: ${[-22, -11, 0, 11, 22][i]}deg;
                     transform: rotate(${[-22, -11, 0, 11, 22][i]}deg)
-                               translateY(${card.selected ? '-12px' : '0px'});
-                    margin-left: ${i === 0 ? '0' : '-42px'};
+                               translateY(${card.selected ? '-18px' : '0px'});
+                    margin-left: ${i === 0 ? '0' : '-30px'};
                     z-index: ${card.selected ? 10 : i};
                 `" />
         </div>
@@ -184,6 +188,36 @@ const cardMarginTop = computed(() => {
 </script>
 
 <style scoped>
+.muted-slash {
+    position: absolute;
+    inset: -2px;
+    pointer-events: none;
+}
+.muted-slash::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 140%;
+    height: 2px;
+    background: #fff;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    border-radius: 1px;
+}
+
+.card-item {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.card-item:not(.card-selected):hover {
+    transform: rotate(var(--rot)) translateY(-14px) scale(1.07) !important;
+    box-shadow: 0 12px 32px rgba(184,134,11,0.4), 0 0 0 2px rgba(184,134,11,0.55);
+    z-index: 20 !important;
+}
+
+.card-selected {
+    box-shadow: 0 0 24px rgba(184,134,11,0.5), 0 0 0 2px rgba(184,134,11,0.8);
+}
+
 .gun-shoot {
     transform-origin: right center;
     animation: gun-shoot 3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
