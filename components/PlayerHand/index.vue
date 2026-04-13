@@ -118,13 +118,13 @@
             :style="`transform: rotate(${handRotation(playerCards)}deg); margin-top: ${cardMarginTop};`">
             <img v-for="(card, i) in playerCards.cards" :key="card.id"
                 :id="`card-${card.id}`"
-                :src="CARD_IMAGES.no_card"
-                class="w-14 h-20 rounded-md shadow-lg ring-1 ring-black/50"
+                :src="gamePhase === 'revealing' ? card.img : CARD_IMAGES.no_card"
+                class="w-16 h-24 rounded-md shadow-lg ring-1 ring-black/50 transition-all duration-500"
                 :style="`
                     transform: rotate(${[-22, -11, 0, 11, 22][i]}deg);
-                    margin-left: ${i === 0 ? '0' : '-38px'};
+                    margin-left: ${i === 0 ? '0' : '-30px'};
                     z-index: ${i};
-                    opacity: 0.85;
+                    opacity: 0.9;
                 `" />
         </div>
 
@@ -141,7 +141,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { CARD_IMAGES, selectCard, dropCards, handPosition, handRotation, lifeEvents, _game } from "~/composables/useGame";
+import { CARD_IMAGES, selectCard, dropCards, handPosition, handRotation, lifeEvents, gamePhase, _game } from "~/composables/useGame";
 import { localStream, peers, enabledPeers, isEnabled, isMuted, isCamOff, enableWebRTC, disableWebRTC, toggleMute, toggleCam } from "~/composables/useWebRTC";
 import { avatars } from "~/assets/avatars";
 import gunImg from "~/assets/gun.svg";

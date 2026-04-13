@@ -226,13 +226,22 @@ const triggerLifeLoss = (loserId: string) => {
 
 export const dealingActive = ref(false);
 
+export type GamePhase = 'idle' | 'dealing' | 'revealing' | 'waiting' | 'playing';
+export const gamePhase = ref<GamePhase>('idle');
+
 export const turnTimeLeft = ref(20);
+export const turnDurationS = ref(20);
+let _turnDurationS = 20;
+let _interTurnDelayMs = 2000;
+let _lifeLossRevealMs = 3000;
 let _timerInterval: ReturnType<typeof setInterval> | null = null;
 
 const startCountdown = (delayMs = 0) => {
     if (_timerInterval) clearInterval(_timerInterval);
-    turnTimeLeft.value = 20;
+    turnTimeLeft.value = _turnDurationS;
+    gamePhase.value = 'waiting';
     setTimeout(() => {
+        gamePhase.value = 'playing';
         _timerInterval = setInterval(() => {
             turnTimeLeft.value--;
             if (turnTimeLeft.value <= 0 && _timerInterval) {
@@ -252,6 +261,12 @@ export const onBluffCalled = (handler: (result: BluffResult) => void) => {
 if (import.meta.client) {
 
 socket.on('game-started', game => {
+    if (game.timing) {
+        _turnDurationS = Math.round(game.timing.turnMs / 1000);
+        turnDurationS.value = _turnDurationS;
+        _interTurnDelayMs = game.timing.interTurnDelayMs;
+        _lifeLossRevealMs = game.timing.lifeLossRevealMs;
+    }
     _game.turn = game.turn?.username ?? game.turn;
     _game.hands = remapHandImages(orderPlayerTablePosition(game.hands));
     _game.matchStarted = game.matchStarted;
@@ -260,8 +275,8 @@ socket.on('game-started', game => {
     gameLogs.splice(0, gameLogs.length);
     addLog({ type: 'round', text: 'Match started', sub: `${game.hands.length} players` });
     dealingActive.value = true;
-    const totalCards = 5 * game.hands.length;
-    const dealDuration = 200 + (totalCards - 1) * 180 + 750 + 400;
+    gamePhase.value = 'dealing';
+    const dealDuration = game.timing?.dealAnimationMs ?? (200 + (5 * game.hands.length - 1) * 180 + 750 + 400);
     setTimeout(() => { dealingActive.value = false; startCountdown(); }, dealDuration);
 });
 
@@ -278,7 +293,7 @@ socket.on('cards-dropped', game => {
     _game.hands = remapHandImages(orderPlayerTablePosition(game.hands));
     _game.cardType = game.cardType;
     tableCardsAnimation({ ...game.table, cards: remapImages(game.table.cards), moves: game.table.moves });
-    startCountdown();
+    startCountdown(_interTurnDelayMs);
 });
 
 socket.on('bluff-called', ({ game, result }: { game: any, result: BluffResult }) => {
@@ -298,6 +313,8 @@ socket.on('bluff-called', ({ game, result }: { game: any, result: BluffResult })
 
     _game.table.cards = remapImages(result.tableCards);
     _game.revealing = true;
+    gamePhase.value = 'revealing';
+    _bluffResultHandlers.forEach(h => h(result));
     setTimeout(() => {
         _game.revealing = false;
         _game.turn = game.turn?.username ?? game.turn;
@@ -305,9 +322,8 @@ socket.on('bluff-called', ({ game, result }: { game: any, result: BluffResult })
         _game.cardType = game.cardType;
         _game.table = game.table;
         _game.matchStarted = !result.gameOver;
-    }, 2000);
-    _bluffResultHandlers.forEach(h => h(result));
-    startCountdown(4000);
+        startCountdown(_interTurnDelayMs);
+    }, _lifeLossRevealMs);
 });
 
 socket.on('turn-timeout', ({ game, result }: { game: any, result: BluffResult }) => {
@@ -321,13 +337,19 @@ socket.on('turn-timeout', ({ game, result }: { game: any, result: BluffResult })
         addToast(e, 1500);
     }
 
-    _game.turn = game.turn?.username ?? game.turn;
-    _game.hands = remapHandImages(orderPlayerTablePosition(game.hands));
-    _game.cardType = game.cardType;
-    _game.table = game.table;
-    _game.matchStarted = !result.gameOver;
+    _game.revealing = true;
+    gamePhase.value = 'revealing';
     _bluffResultHandlers.forEach(h => h(result));
-    if (!result.gameOver) startCountdown(4000);
+    setTimeout(() => {
+        _game.revealing = false;
+        _game.turn = game.turn?.username ?? game.turn;
+        _game.hands = remapHandImages(orderPlayerTablePosition(game.hands));
+        _game.cardType = game.cardType;
+        _game.table = game.table;
+        _game.matchStarted = !result.gameOver;
+        if (result.gameOver) gamePhase.value = 'idle';
+        else startCountdown(_interTurnDelayMs);
+    }, _lifeLossRevealMs);
 });
 
 socket.on('turn-skipped', game => {
