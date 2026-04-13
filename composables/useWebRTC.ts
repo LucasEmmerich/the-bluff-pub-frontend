@@ -91,6 +91,8 @@ export const toggleCam = () => {
     if (track) { track.enabled = !track.enabled; isCamOff.value = !track.enabled; }
 };
 
+if (import.meta.client) {
+
 socket.on('webrtc-user-joined', async ({ from }: { from: string }) => {
     enabledPeers.add(from);
     if (peers[from]?.stream) return;
@@ -141,3 +143,5 @@ socket.on('disconnect', () => {
     enabledPeers.clear();
     isEnabled.value = false;
 });
+
+}

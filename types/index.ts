@@ -27,7 +27,7 @@ export type Move = {
 export type Game = {
     round: number;
     cardTypes: Array<string>;
-    cardType?: 'King' | 'Queen' | 'Ace';
+    cardType?: 'King' | 'Queen' | 'Jack';
     deck: Array<Card>;
     turn?: string;
     matchStarted: boolean;

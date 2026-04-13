@@ -1,6 +1,6 @@
 import { reactive, ref } from "vue";
 import { socket } from "~/socket";
-import { king, queen, ace, joker, no_card } from '~/assets/cards';
+import { king, queen, jack, joker, no_card } from '~/assets/cards';
 import { _room } from "~/composables/useRoom";
 import type { Card, Hand, Game, BluffResult } from "~/types";
 
@@ -17,18 +17,18 @@ export const DECK: Array<Card> = [
     { id: 10, name: 'Queen', values: ['Queen'],                img: queen },
     { id: 11, name: 'Queen', values: ['Queen'],                img: queen },
     { id: 12, name: 'Queen', values: ['Queen'],                img: queen },
-    { id: 13, name: 'Ace',   values: ['Ace'],                  img: ace },
-    { id: 14, name: 'Ace',   values: ['Ace'],                  img: ace },
-    { id: 15, name: 'Ace',   values: ['Ace'],                  img: ace },
-    { id: 16, name: 'Ace',   values: ['Ace'],                  img: ace },
-    { id: 17, name: 'Ace',   values: ['Ace'],                  img: ace },
-    { id: 18, name: 'Ace',   values: ['Ace'],                  img: ace },
-    { id: 19, name: 'Joker', values: ['King', 'Queen', 'Ace'], img: joker },
-    { id: 20, name: 'Joker', values: ['King', 'Queen', 'Ace'], img: joker },
+    { id: 13, name: 'Jack',   values: ['Jack'],                  img: jack},
+    { id: 14, name: 'Jack',   values: ['Jack'],                  img: jack},
+    { id: 15, name: 'Jack',   values: ['Jack'],                  img: jack},
+    { id: 16, name: 'Jack',   values: ['Jack'],                  img: jack},
+    { id: 17, name: 'Jack',   values: ['Jack'],                  img: jack},
+    { id: 18, name: 'Jack',   values: ['Jack'],                  img: jack},
+    { id: 19, name: 'Joker', values: ['King', 'Queen', 'Jack'], img: joker },
+    { id: 20, name: 'Joker', values: ['King', 'Queen', 'Jack'], img: joker },
 ];
 
-export const CARD_IMAGES = { king, queen, ace, joker, no_card };
-export const CARD_TYPES = ['King', 'Queen', 'Ace'];
+export const CARD_IMAGES = { king, queen, jack, joker, no_card };
+export const CARD_TYPES = ['King', 'Queen', 'Jack'];
 
 const _initialState: Game = {
     round: 0,
@@ -249,6 +249,8 @@ export const onBluffCalled = (handler: (result: BluffResult) => void) => {
     _bluffResultHandlers.push(handler);
 };
 
+if (import.meta.client) {
+
 socket.on('game-started', game => {
     _game.turn = game.turn?.username ?? game.turn;
     _game.hands = remapHandImages(orderPlayerTablePosition(game.hands));
@@ -256,7 +258,7 @@ socket.on('game-started', game => {
     _game.cardType = game.cardType;
     _game.table = { cards: [], moves: [] };
     gameLogs.splice(0, gameLogs.length);
-    addLog({ type: 'round', text: 'Partida iniciada', sub: `${game.hands.length} jogadores` });
+    addLog({ type: 'round', text: 'Match started', sub: `${game.hands.length} players` });
     dealingActive.value = true;
     const totalCards = 5 * game.hands.length;
     const dealDuration = 200 + (totalCards - 1) * 180 + 750 + 400;
@@ -269,7 +271,7 @@ socket.on('cards-dropped', game => {
         addLog({
             type: 'play',
             text: lastMove.player.username,
-            sub: `jogou ${lastMove.cardsDropped.length} carta${lastMove.cardsDropped.length !== 1 ? 's' : ''}`,
+            sub: `played ${lastMove.cardsDropped.length} card${lastMove.cardsDropped.length !== 1 ? 's' : ''}`,
         });
     }
     _game.turn = game.turn?.username ?? game.turn;
@@ -283,13 +285,13 @@ socket.on('bluff-called', ({ game, result }: { game: any, result: BluffResult })
     triggerLifeLoss(result.loser.id);
     const bluffEntry = {
         type: (result.bluffed ? 'bluff-win' : 'bluff-fail') as GameLogEntry['type'],
-        text: result.bluffed ? 'Mentira detectada!' : 'Não era mentira!',
-        sub: `${result.loser.username} perde uma vida`,
+        text: result.bluffed ? 'Bluff detected!' : 'Not a bluff!',
+        sub: `${result.loser.username} loses a life`,
     };
     addLog(bluffEntry);
     addToast(bluffEntry);
     if (result.eliminated) {
-        const e = { type: 'eliminated' as GameLogEntry['type'], text: `${result.loser.username} eliminado` };
+        const e = { type: 'eliminated' as GameLogEntry['type'], text: `${result.loser.username} eliminated` };
         addLog(e);
         addToast(e, 1800);
     }
@@ -310,11 +312,11 @@ socket.on('bluff-called', ({ game, result }: { game: any, result: BluffResult })
 
 socket.on('turn-timeout', ({ game, result }: { game: any, result: BluffResult }) => {
     triggerLifeLoss(result.loser.id);
-    const timeoutEntry = { type: 'timeout' as GameLogEntry['type'], text: `${result.loser.username}`, sub: 'esgotou o tempo — perde vida' };
+    const timeoutEntry = { type: 'timeout' as GameLogEntry['type'], text: `${result.loser.username}`, sub: 'ran out of time — loses a life' };
     addLog(timeoutEntry);
     addToast(timeoutEntry);
     if (result.eliminated) {
-        const e = { type: 'eliminated' as GameLogEntry['type'], text: `${result.loser.username} eliminado` };
+        const e = { type: 'eliminated' as GameLogEntry['type'], text: `${result.loser.username} eliminated` };
         addLog(e);
         addToast(e, 1500);
     }
@@ -339,6 +341,8 @@ socket.on('disconnect', () => {
     _game.hands = [];
     _game.table = { cards: [], moves: [] };
 });
+
+}
 
 export const _game = reactive<Game>(_initialState);
 export const useGame = () => _game;

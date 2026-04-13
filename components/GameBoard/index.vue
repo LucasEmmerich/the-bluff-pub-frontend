@@ -83,7 +83,7 @@
                     {{ champion() }}
                 </div>
                 <div class="font-pub text-pub-cream/70 text-sm tracking-[0.4em] uppercase mt-2">
-                    venceu a partida
+                    won the match
                 </div>
             </div>
 
@@ -94,9 +94,9 @@
             </div>
 
             <CustomButton v-if="_room.mainPlayer.id === _room.roomOwner?.id"
-                label="⚔ Jogar Novamente" type="info" @click="startGame" />
+                label="⚔ Play Again" type="info" @click="startGame" />
             <p v-else class="font-pub text-pub-cream-dim text-xs italic tracking-wide">
-                Aguardando o dono reiniciar...
+                Waiting for the owner to restart...
             </p>
         </div>
 

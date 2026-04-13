@@ -17,7 +17,7 @@
                 <div v-if="!isMainPlayer && enabledPeers.has(playerCards.player.id) && !activeStream"
                     class="absolute inset-0 rounded-full flex items-center justify-center"
                     style="background: rgba(0,0,0,0.5);">
-                    <span class="text-pub-gold/70 text-xs font-pub animate-pulse">conectando...</span>
+                    <span class="text-pub-gold/70 text-xs font-pub animate-pulse">connecting...</span>
                 </div>
 
                 <div class="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none">
@@ -125,9 +125,9 @@
         </div>
 
         <div v-if="isCurrentTurn && isMainPlayer" class="flex gap-1 mt-1">
-            <CustomButton v-if="hasTableCards" label="Mentira!" type="cancel"
+            <CustomButton v-if="hasTableCards" label="Bluff!" type="cancel"
                 @click="() => dropCards(true)" />
-            <CustomButton v-if="!mustCallBluff" label="Jogar" type="save"
+            <CustomButton v-if="!mustCallBluff" label="Play" type="save"
                 :disabled="!playerCards.cards.some(c => c.selected)"
                 @click="() => dropCards(false)" />
         </div>

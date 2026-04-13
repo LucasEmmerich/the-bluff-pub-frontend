@@ -1,7 +1,5 @@
-import king from './king.png';
-import queen from './queen.png';
-import ace from './ace.png';
-import joker from './joker.png';
-import no_card from './no_card.png';
-
-export { king, queen, ace, joker, no_card };
+export const king = '/cards/king.png';
+export const queen = '/cards/queen.png';
+export const jack = '/cards/jack.png';
+export const joker = '/cards/joker.png';
+export const no_card = '/cards/no_card.png';

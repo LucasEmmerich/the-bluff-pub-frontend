@@ -34,23 +34,23 @@
             <AvatarSelector :onlyView="!!_room.id" :images="avatars" v-model="_room.mainPlayer.avatar"
                 :disabled="_game.matchStarted" />
             <TextInput :disabled="_room.id" v-model="_room.mainPlayer.username"
-                placeholder="Seu apelido..." label="Jogador:" />
+                placeholder="Your nickname..." label="Player:" />
         </div>
 
         <div class="flex flex-col gap-4 px-4 py-5" v-if="!_room.id">
-            <CustomButton label="Abrir Mesa" type="info"
-                @click="[createRoom(), $toast.success('Mesa aberta!')]" />
+            <CustomButton label="Open Table" type="info"
+                @click="[createRoom(), $toast.success('Table opened!')]" />
 
             <div class="flex items-center gap-2">
                 <div class="flex-1 h-px bg-pub-gold/25"></div>
-                <span class="font-pub text-pub-cream-dim text-xs tracking-widest">OU</span>
+                <span class="font-pub text-pub-cream-dim text-xs tracking-widest">OR</span>
                 <div class="flex-1 h-px bg-pub-gold/25"></div>
             </div>
 
             <div class="flex flex-col gap-2">
-                <TextInput v-model="_room.enterRoomId" placeholder="Código da mesa"
-                    label="Entrar em mesa:" sublabel="" />
-                <CustomButton label="Entrar" type="save" @click="joinRoom" />
+                <TextInput v-model="_room.enterRoomId" placeholder="Table code"
+                    label="Join a table:" sublabel="" />
+                <CustomButton label="Join" type="save" @click="joinRoom" />
             </div>
         </div>
 
@@ -58,17 +58,17 @@
 
             <div class="text-center py-2 rounded"
                 style="background: rgba(184,134,11,0.08); border: 1px solid rgba(184,134,11,0.2)">
-                <div class="font-pub text-pub-cream-dim text-[10px] tracking-[0.5em] mb-1">CÓDIGO DA MESA</div>
+                <div class="font-pub text-pub-cream-dim text-[10px] tracking-[0.5em] mb-1">TABLE CODE</div>
                 <div class="font-pub text-pub-gold text-2xl font-bold tracking-[0.4em]">{{ _room.id }}</div>
                 <button class="font-pub text-pub-cream-dim/60 text-[10px] tracking-widest hover:text-pub-gold transition-colors mt-1"
-                    @click="[copyRoomCodeToClipboard(), $toast.success('Código copiado!')]">
-                    copiar ↗
+                    @click="[copyRoomCodeToClipboard(), $toast.success('Code copied!')]">
+                    copy ↗
                 </button>
             </div>
 
             <div class="flex items-center gap-2">
                 <div class="flex-1 h-px bg-pub-gold/25"></div>
-                <span class="font-pub text-pub-gold/60 text-[10px] tracking-[0.4em]">JOGADORES</span>
+                <span class="font-pub text-pub-gold/60 text-[10px] tracking-[0.4em]">PLAYERS</span>
                 <div class="flex-1 h-px bg-pub-gold/25"></div>
             </div>
 
@@ -84,9 +84,9 @@
 
             <div class="mt-auto pt-4 border-t border-pub-gold/20">
                 <CustomButton v-if="_room.mainPlayer.id === _room.roomOwner?.id"
-                    label="⚔ Iniciar Partida" type="save" @click="startGame" />
+                    label="⚔ Start Game" type="save" @click="startGame" />
                 <p v-else class="text-center font-pub text-pub-cream-dim text-xs italic tracking-wide">
-                    Aguardando o dono da mesa...
+                    Waiting for the table owner...
                 </p>
             </div>
         </div>
@@ -107,11 +107,13 @@ const { $toast }: any = useNuxtApp();
 const _room = useRoom();
 const _game = useGame();
 
-socket.on('player-left', (_room: any, leftPlayer: any) => {
-    $toast.info(`${leftPlayer.username} saiu da mesa.`);
-});
+onMounted(() => {
+    socket.on('player-left', (_room: any, leftPlayer: any) => {
+        $toast.info(`${leftPlayer.username} left the table.`);
+    });
 
-socket.on('send-notification', ({ type, message }: { type: 'error' | 'info' | 'success', message: string }) => {
-    $toast[type](message);
+    socket.on('send-notification', ({ type, message }: { type: 'error' | 'info' | 'success', message: string }) => {
+        $toast[type](message);
+    });
 });
 </script>
