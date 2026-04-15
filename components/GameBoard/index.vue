@@ -1,14 +1,104 @@
 <template>
-    <div class="flex-1 relative overflow-hidden" style="background: #09080c;">
+    <div class="h-full relative overflow-hidden" style="background: #0a0603;">
 
         <DealingAnimation />
+
+        <div v-if="_room.id" class="absolute" style="left: 16px; bottom: 16px; z-index: 20;">
+            <RoomChat :roomId="_room.id" :mainPlayerId="_room.mainPlayer.id" />
+        </div>
 
         <Transition name="vignette">
             <div v-if="vignetteActive" class="absolute inset-0 pointer-events-none z-50"
                 style="box-shadow: inset 0 0 120px rgba(220,38,38,0.55);"></div>
         </Transition>
 
+        <div v-if="!_game.hands.length" class="flex items-center justify-center h-full">
+
+            <div v-if="!_room.id" class="flex flex-col items-center gap-6" style="width: 300px;">
+
+                <div class="flex flex-col items-center gap-3 w-full px-6 py-5 rounded-xl"
+                    style="background: rgba(255,255,255,0.03); border: 1px solid rgba(184,134,11,0.12);">
+                    <AppImage :src="avatars[_room.mainPlayer.avatar as number]"
+                        size="64px" rounded="rounded-full" img-class="ring-2 ring-pub-gold/25" />
+                    <div class="flex items-center gap-2">
+                        <span class="font-pub text-pub-cream/70 text-sm tracking-wide">{{ _room.mainPlayer.username }}</span>
+                        <button @click="showEditModal = true"
+                            class="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:opacity-70"
+                            style="background: rgba(184,134,11,0.08); border: 1px solid rgba(184,134,11,0.3);">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(184,134,11,0.8)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-3 w-full">
+                    <CustomButton label="Open Table" type="info"
+                        @click="[createRoom(), $toast.success('Table opened!')]" />
+
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1 h-px" style="background: rgba(255,255,255,0.08);"></div>
+                        <span class="font-pub text-pub-cream-dim/50 text-xs tracking-widest">OR</span>
+                        <div class="flex-1 h-px" style="background: rgba(255,255,255,0.08);"></div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <TextInput v-model="_room.enterRoomId" placeholder="Table code" label="Join a table:" />
+                        <CustomButton label="Join" type="save" @click="joinRoom" />
+                    </div>
+                </div>
+
+            </div>
+
+            <div v-else class="flex flex-col items-center gap-6" style="width: 300px;">
+
+                <div class="flex flex-col items-center gap-3 w-full px-4 py-4 rounded-xl"
+                    style="background: rgba(184,134,11,0.06); border: 1px solid rgba(184,134,11,0.18);">
+                    <span class="font-pub text-[10px] tracking-[0.5em] uppercase" style="color: rgba(184,134,11,0.45);">Table Code</span>
+                    <span class="font-pub font-black tracking-[0.3em] text-base" style="color: #f0c040; text-shadow: 0 0 16px rgba(184,134,11,0.35);">{{ _room.id }}</span>
+                    <button class="font-pub text-[9px] tracking-[0.2em] uppercase px-3 py-1 rounded-full transition-all duration-200 hover:opacity-80"
+                        style="border: 1px solid rgba(184,134,11,0.25); color: rgba(184,134,11,0.6);"
+                        @click="[copyRoomCodeToClipboard(), $toast.success('Code copied!')]">
+                        Copy Code
+                    </button>
+                </div>
+
+                <div class="w-full">
+                    <div class="font-pub text-pub-cream-dim/40 text-[10px] tracking-[0.5em] uppercase mb-3">Players</div>
+                    <div class="flex flex-col gap-2.5" style="height: 158px;">
+                        <div v-for="p in _room.players" :key="p.username" class="flex items-center gap-3">
+                            <AppImage :src="avatars[p.avatar as number]" size="32px" rounded="rounded-full" img-class="opacity-90" />
+                            <span class="font-pub text-pub-cream/80 text-sm flex-1 truncate">{{ p.username }}</span>
+                            <span v-if="p.id === _room.roomOwner?.id" class="text-sm opacity-70">👑</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-full flex flex-col gap-2">
+                    <CustomButton v-if="_room.mainPlayer.id === _room.roomOwner?.id"
+                        label="⚔ Start Game" type="save" @click="startGame" />
+                    <p v-else class="font-pub text-pub-cream-dim/50 text-xs italic tracking-wide text-center w-full flex items-center justify-center rounded border px-2 whitespace-nowrap"
+                        style="border-color: rgba(255,255,255,0.06); height: 38px;">
+                        Waiting for the table owner...
+                    </p>
+                    <CustomButton label="Leave Room" type="cancel" @click="leaveRoom" />
+                </div>
+
+
+            </div>
+
+        </div>
+
         <div v-if="_game.hands.length" class="flex flex-col items-center justify-center h-full">
+
+            <div class="absolute" style="left: 16px; top: 16px; z-index: 10; width: 220px;">
+                <GameLog />
+            </div>
+
+            <div v-if="_room.leaderboard.length" class="absolute" style="left: 16px; top: 50%; transform: translateY(-50%); z-index: 10;">
+                <RoomLeaderboard :entries="_room.leaderboard" />
+            </div>
 
             <div v-if="_game.cardType && !champion()"
                 class="absolute pointer-events-none"
@@ -102,7 +192,7 @@
                 class="absolute inset-0 flex items-center justify-center"
                 style="z-index: 30; background: rgba(0,0,0,0.6);">
                 <div class="flex flex-col items-center gap-6 px-10 py-8 rounded-2xl"
-                    style="background: rgba(10,7,4,0.97); border: 1px solid rgba(184,134,11,0.4); box-shadow: 0 0 60px rgba(0,0,0,0.9); width: 300px; height: 260px; text-align: center;">
+                    style="background: rgba(10,7,4,0.97); border: 1px solid rgba(184,134,11,0.4); box-shadow: 0 0 60px rgba(0,0,0,0.9); width: 400px; height: 260px; text-align: center;">
 
                     <div class="flex flex-col items-center gap-1.5">
                         <span class="font-pub tracking-[0.35em] uppercase"
@@ -110,7 +200,7 @@
                             Congratulations
                         </span>
                         <span class="font-pub font-black tracking-widest"
-                            style="font-size: 2.4rem; color: #f0c040; text-shadow: 0 0 28px rgba(184,134,11,0.6);">
+                            style="font-size: 1.6rem; color: #f0c040; text-shadow: 0 0 28px rgba(184,134,11,0.6);">
                             {{ champion() }}
                         </span>
                         <span class="font-pub tracking-[0.35em] uppercase"
@@ -131,20 +221,44 @@
             </div>
         </Transition>
 
+        <PlayerSetupModal
+            :visible="showEditModal"
+            :initialUsername="_room.mainPlayer.username || ''"
+            :initialAvatar="_room.mainPlayer.avatar ?? 0"
+            @confirm="onEditConfirm"
+        />
+
     </div>
 </template>
 
 <script setup lang="ts">
 import { champion, startGame, CARD_IMAGES, turnTimeLeft, turnDurationS, vignetteActive, dealingActive, gamePhase } from "~/composables/useGame";
+import { createRoom, joinRoom, copyRoomCodeToClipboard } from "~/composables/useRoom";
+import { avatars } from "~/assets/avatars";
 import { socket } from "~/socket";
 
+const { $toast }: any = useNuxtApp();
 const _game = useGame();
 const _room = useRoom();
 const router = useRouter();
 
+const showEditModal = ref(false);
+
+const onEditConfirm = (username: string, avatar: number) => {
+    localStorage.setItem('bluffpub_username', username);
+    localStorage.setItem('bluffpub_avatar', String(avatar));
+    _room.mainPlayer.username = username;
+    _room.mainPlayer.avatar = avatar;
+    showEditModal.value = false;
+};
+
 const leaveRoom = () => {
     socket.emit('left-room', _room);
-    router.push('/');
+    _room.id = undefined;
+    _room.enterRoomId = undefined;
+    _room.players = [];
+    _room.roomOwner = undefined;
+    _room.leaderboard = [];
 };
 </script>
 

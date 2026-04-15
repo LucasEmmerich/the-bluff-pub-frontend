@@ -8,10 +8,11 @@ const _initialState: Room = {
     mainPlayer: {
         id: undefined,
         username: undefined,
-        avatar: undefined,
+        avatar: 0,
     },
     players: [],
-    roomOwner: undefined
+    roomOwner: undefined,
+    leaderboard: [],
 };
 
 export const copyRoomCodeToClipboard = () => {
@@ -41,6 +42,7 @@ if (import.meta.client) {
         _room.id = room.id;
         _room.players = room.players;
         _room.roomOwner = room.roomOwner;
+        if (room.leaderboard) _room.leaderboard = room.leaderboard;
     });
 
     socket.on('player-left', (room) => {
@@ -48,11 +50,16 @@ if (import.meta.client) {
         _room.roomOwner = room.roomOwner;
     });
 
+    socket.on('leaderboard-updated', (leaderboard) => {
+        _room.leaderboard = leaderboard;
+    });
+
     socket.on('disconnect', () => {
         _room.id = undefined;
         _room.enterRoomId = undefined;
         _room.mainPlayer = { id: undefined, username: undefined, avatar: undefined };
         _room.players = [];
+        _room.leaderboard = [];
     });
 }
 

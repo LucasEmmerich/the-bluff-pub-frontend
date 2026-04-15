@@ -188,7 +188,7 @@ const addLog = (entry: Omit<GameLogEntry, 'id'>) => {
 export type GameToast = GameLogEntry;
 export const toasts = reactive<GameToast[]>([]);
 
-const TOAST_TYPES = new Set<GameLogEntry['type']>(['bluff-win', 'bluff-fail', 'timeout', 'eliminated']);
+const TOAST_TYPES = new Set<GameLogEntry['type']>(['bluff-win', 'bluff-fail', 'eliminated']);
 
 const addToast = (entry: Omit<GameToast, 'id'>, delayMs = 0) => {
     if (!TOAST_TYPES.has(entry.type)) return;
@@ -260,7 +260,8 @@ export const onBluffCalled = (handler: (result: BluffResult) => void) => {
 
 if (import.meta.client) {
 
-socket.on('game-started', game => {
+socket.on('game-started', (game: any) => {
+    if (game.leaderboard) _room.leaderboard = game.leaderboard;
     if (game.timing) {
         _turnDurationS = Math.round(game.timing.turnMs / 1000);
         turnDurationS.value = _turnDurationS;
@@ -301,7 +302,7 @@ socket.on('bluff-called', ({ game, result }: { game: any, result: BluffResult })
     const bluffEntry = {
         type: (result.bluffed ? 'bluff-win' : 'bluff-fail') as GameLogEntry['type'],
         text: result.bluffed ? 'Bluff detected!' : 'Not a bluff!',
-        sub: `${result.loser.username} loses a life`,
+        sub: `${result.loser.username} loses 1 life`,
     };
     addLog(bluffEntry);
     addToast(bluffEntry);

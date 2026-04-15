@@ -1,6 +1,7 @@
 <template>
-  <div class="min-h-screen bg-pub-bg font-body">
-    <NuxtLayout name="server-status" />
-    <NuxtPage />
-  </div>
+    <div class="bg-pub-bg font-body">
+        <NuxtLayout>
+            <NuxtPage />
+        </NuxtLayout>
+    </div>
 </template>

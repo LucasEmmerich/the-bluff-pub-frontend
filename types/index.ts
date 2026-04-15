@@ -39,12 +39,18 @@ export type Game = {
     };
 };
 
+export type LeaderboardEntry = {
+    player: Player;
+    wins: number;
+};
+
 export type Room = {
     id: string | undefined;
     enterRoomId: string | undefined;
     mainPlayer: Player;
     players: Array<Player>;
     roomOwner?: Player;
+    leaderboard: Array<LeaderboardEntry>;
 };
 
 export type BluffResult = {

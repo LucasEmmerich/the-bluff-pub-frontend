@@ -77,11 +77,7 @@
             </div>
 
             <div v-if="activeLifeEvent" class="pointer-events-none select-none"
-                style="position: absolute; left: 100%; top: 50%; transform: translateY(-50%); z-index: 100;">
-                <div class="gun-shoot" style="position: relative; display: inline-block;">
-                    <img :src="gunImg" style="width: 5rem; height: 2.5rem; object-fit: contain; display: block;" />
-                    <span class="muzzle-flash" style="position: absolute; top: 50%; right: 100%; font-size: 1.3rem;">💥</span>
-                </div>
+                style="position: absolute; left: 50%; top: 0; z-index: 100;">
                 <div class="life-float-text font-pub font-black text-sm"
                     :style="{ color: activeLifeEvent.isMainPlayer ? '#f87171' : '#fb923c',
                               textShadow: activeLifeEvent.isMainPlayer ? '0 0 10px rgba(220,38,38,0.9)' : '0 0 10px rgba(251,146,60,0.9)' }">
@@ -144,7 +140,6 @@ import { computed } from "vue";
 import { CARD_IMAGES, selectCard, dropCards, handPosition, handRotation, lifeEvents, gamePhase, _game } from "~/composables/useGame";
 import { localStream, peers, enabledPeers, isEnabled, isMuted, isCamOff, enableWebRTC, disableWebRTC, toggleMute, toggleCam } from "~/composables/useWebRTC";
 import { avatars } from "~/assets/avatars";
-import gunImg from "~/assets/gun.svg";
 import type { Hand } from "~/types";
 
 const props = defineProps<{
@@ -218,33 +213,6 @@ const cardMarginTop = computed(() => {
     box-shadow: 0 0 24px rgba(184,134,11,0.5), 0 0 0 2px rgba(184,134,11,0.8);
 }
 
-.gun-shoot {
-    transform-origin: right center;
-    animation: gun-shoot 3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-}
-
-@keyframes gun-shoot {
-    0%   { opacity: 0; transform: scale(0.5) rotate(-8deg); }
-    10%  { opacity: 1; transform: scale(1) rotate(0deg); }
-    22%  { opacity: 1; transform: rotate(0deg); }
-    36%  { opacity: 1; transform: rotate(45deg); }
-    55%  { opacity: 1; transform: rotate(28deg); }
-    72%  { opacity: 1; transform: rotate(14deg); }
-    88%  { opacity: 0.7; transform: rotate(4deg); }
-    100% { opacity: 0;  transform: rotate(0deg) scale(0.9); }
-}
-
-.muzzle-flash {
-    transform: translateY(-50%);
-    animation: muzzle-flash 0.5s ease-out 0.62s forwards;
-    opacity: 0;
-}
-
-@keyframes muzzle-flash {
-    0%   { opacity: 0; transform: translateY(-50%) scale(0.3); }
-    25%  { opacity: 1; transform: translateY(-50%) scale(1.6); }
-    100% { opacity: 0; transform: translateY(-50%) scale(0.8); }
-}
 
 .life-float-text {
     position: absolute;
