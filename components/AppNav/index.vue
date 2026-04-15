@@ -2,10 +2,20 @@
     <nav class="shrink-0 flex items-stretch h-12 relative"
         style="background: #0a0603; border-bottom: 1px solid rgba(184,134,11,0.12);">
 
-        <NuxtLink to="/" class="font-pub font-black tracking-[0.25em] text-xs flex items-center px-8"
-            style="color: rgba(184,134,11,0.5);">
-            BLUFF PUB
-        </NuxtLink>
+        <div class="flex items-center gap-2.5 px-8">
+            <NuxtLink to="/" class="font-pub font-black tracking-[0.25em] text-xs"
+                style="color: rgba(184,134,11,0.5);">
+                BLUFF PUB
+            </NuxtLink>
+            <NuxtLink to="/patch-notes"
+                class="font-pub text-[8px] tracking-[0.2em] px-1.5 py-px rounded-full transition-all duration-200 hover:opacity-80"
+                :style="route.path === '/patch-notes'
+                    ? 'background: rgba(184,134,11,0.18); border: 1px solid rgba(184,134,11,0.5); color: #f0c040;'
+                    : 'background: rgba(184,134,11,0.06); border: 1px solid rgba(184,134,11,0.2); color: rgba(184,134,11,0.45);'">
+                v1.0.0
+            </NuxtLink>
+        </div>
+
 
         <div class="absolute inset-y-0 left-1/2 -translate-x-1/2 flex items-stretch">
 
