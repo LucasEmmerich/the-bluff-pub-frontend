@@ -94,7 +94,8 @@
             </span>
         </div>
 
-        <div v-if="isMainPlayer" class="flex justify-center items-end" style="margin-left: -20px; margin-top: 12px;">
+        <div v-if="isMainPlayer" class="flex justify-center items-end"
+            :style="`margin-left: -20px; margin-top: 12px; transform: scale(${isCurrentTurn ? 1.18 : 1}); transform-origin: bottom center; transition: transform 0.35s ease;`">
             <img v-for="(card, i) in playerCards.cards" :key="card.id"
                 :id="`card-${card.id}`"
                 :src="card.img"

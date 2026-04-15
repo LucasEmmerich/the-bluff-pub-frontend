@@ -64,6 +64,22 @@ const tagStyle = (tag: Tag) => {
 
 const releases = [
     {
+        version: '1.1.0',
+        date: 'April 15, 2025',
+        label: 'Gameplay Polish',
+        groups: [
+            {
+                icon: '🎮',
+                title: 'Play',
+                items: [
+                    { tag: 'IMPROVED', text: 'Calling bluff now triggers a shake animation on the table cards instead of the card-drop animation' },
+                    { tag: 'IMPROVED', text: 'Main player\'s hand scales up on their turn as a visual cue' },
+                    { tag: 'IMPROVED', text: 'Bluff animation duration is now synced with the backend to prevent client/server desync' },
+                ],
+            },
+        ],
+    },
+    {
         version: '1.0.0',
         date: 'April 14, 2025',
         label: 'Initial Release',

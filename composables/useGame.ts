@@ -64,7 +64,11 @@ export const dropCards = (callLiar: boolean) => {
         cardsDropped: _game.hands.find(x => x.player.id === _room.mainPlayer.id)?.cards?.filter(x => x.selected),
         liarCall: callLiar
     };
-    dropCardsAnimation(() => socket.emit('drop-cards', { room: _room, move }));
+    if (callLiar) {
+        callBluffAnimation(() => socket.emit('drop-cards', { room: _room, move }));
+    } else {
+        dropCardsAnimation(() => socket.emit('drop-cards', { room: _room, move }));
+    }
 };
 
 const OTHER_ANGLES: Record<number, number[]> = {
@@ -128,6 +132,35 @@ const tableCardsAnimation = (table: any) => {
     document.getElementById('table-cards')?.classList.remove('fade-in');
     _game.table = table;
     document.getElementById('table-cards')?.classList.add('fade-in');
+};
+
+const callBluffAnimation = (cb: () => void) => {
+    _game.hands.find(x => x.player.id === _room.mainPlayer.id)?.cards.forEach(c => c.selected = false);
+    socket.emit('bluff-intent', { room: { id: _room.id } });
+
+    const tableCardsEl = document.getElementById('table-cards');
+    if (!tableCardsEl) { cb(); return; }
+
+    const dur = _bluffCallAnimMs;
+    tableCardsEl.animate([
+        { transform: 'translateX(0px)   scale(1)',    filter: 'drop-shadow(0 0 0px   rgba(220,38,38,0))',    offset: 0    },
+        { transform: 'translateX(-12px) scale(1.06)', filter: 'drop-shadow(0 0 16px  rgba(220,38,38,0.95))', offset: 0.05 },
+        { transform: 'translateX(12px)  scale(1.06)', filter: 'drop-shadow(0 0 22px  rgba(220,38,38,1))',    offset: 0.11 },
+        { transform: 'translateX(-12px) scale(1.06)', filter: 'drop-shadow(0 0 22px  rgba(220,38,38,1))',    offset: 0.17 },
+        { transform: 'translateX(10px)  scale(1.05)', filter: 'drop-shadow(0 0 20px  rgba(220,38,38,0.95))', offset: 0.23 },
+        { transform: 'translateX(-8px)  scale(1.04)', filter: 'drop-shadow(0 0 20px  rgba(220,38,38,0.9))',  offset: 0.32 },
+        { transform: 'translateX(8px)   scale(1.04)', filter: 'drop-shadow(0 0 20px  rgba(220,38,38,0.9))',  offset: 0.41 },
+        { transform: 'translateX(-6px)  scale(1.03)', filter: 'drop-shadow(0 0 18px  rgba(220,38,38,0.8))',  offset: 0.52 },
+        { transform: 'translateX(6px)   scale(1.03)', filter: 'drop-shadow(0 0 16px  rgba(220,38,38,0.7))',  offset: 0.63 },
+        { transform: 'translateX(-4px)  scale(1.02)', filter: 'drop-shadow(0 0 12px  rgba(220,38,38,0.5))',  offset: 0.74 },
+        { transform: 'translateX(3px)   scale(1.01)', filter: 'drop-shadow(0 0 8px   rgba(220,38,38,0.3))',  offset: 0.85 },
+        { transform: 'translateX(0px)   scale(1)',    filter: 'drop-shadow(0 0 0px   rgba(220,38,38,0))',    offset: 1    },
+    ], { duration: dur, easing: 'ease-out', fill: 'forwards' });
+
+    setTimeout(() => {
+        tableCardsEl.getAnimations().forEach(a => a.cancel());
+        cb();
+    }, dur + 30);
 };
 
 const dropCardsAnimation = (cb: () => void) => {
@@ -234,6 +267,7 @@ export const turnDurationS = ref(20);
 let _turnDurationS = 20;
 let _interTurnDelayMs = 2000;
 let _lifeLossRevealMs = 3000;
+let _bluffCallAnimMs = 2000;
 let _timerInterval: ReturnType<typeof setInterval> | null = null;
 
 const startCountdown = (delayMs = 0) => {
@@ -267,6 +301,7 @@ socket.on('game-started', (game: any) => {
         turnDurationS.value = _turnDurationS;
         _interTurnDelayMs = game.timing.interTurnDelayMs;
         _lifeLossRevealMs = game.timing.lifeLossRevealMs;
+        if (game.timing.bluffCallAnimMs) _bluffCallAnimMs = game.timing.bluffCallAnimMs;
     }
     _game.turn = game.turn?.username ?? game.turn;
     _game.hands = remapHandImages(orderPlayerTablePosition(game.hands));
