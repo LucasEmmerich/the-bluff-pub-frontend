@@ -6,14 +6,15 @@ type PeerEntry = { connection: RTCPeerConnection; stream: MediaStream | null };
 export const localStream = ref<MediaStream | null>(null);
 export const peers = reactive<Record<string, PeerEntry>>({});
 export const enabledPeers = reactive(new Set<string>());
-export const isEnabled = ref(false);
-export const isMuted = ref(false);
-export const isCamOff = ref(false);
+export const isAudioEnabled = ref(false);
+export const isCamEnabled = ref(false);
 
 const ICE_SERVERS = [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
 ];
+
+let webrtcJoined = false;
 
 const createPeer = (remoteId: string): RTCPeerConnection => {
     if (peers[remoteId]) {
@@ -54,58 +55,81 @@ const closePeer = (id: string) => {
     enabledPeers.delete(id);
 };
 
-export const enableWebRTC = async (roomId: string) => {
-    try {
-        localStream.value = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        localStream.value.getAudioTracks().forEach(t => { t.enabled = false; });
-        isEnabled.value = true;
-        isMuted.value = true;
-
-        for (const [remoteId, entry] of Object.entries(peers)) {
-            const pc = entry.connection;
-            if (pc.signalingState === 'closed') continue;
-            localStream.value.getTracks().forEach(t => pc.addTrack(t, localStream.value!));
-            try {
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
-                socket.emit('webrtc-offer', { to: remoteId, offer });
-            } catch { /* ignore */ }
-        }
-
-        socket.emit('webrtc-join', { roomId });
-    } catch {
-        localStream.value = null;
-        isEnabled.value = false;
-    }
+const ensureLocalStream = (): MediaStream => {
+    if (!localStream.value) localStream.value = new MediaStream();
+    return localStream.value;
 };
 
-export const disableWebRTC = async (_roomId: string) => {
-    localStream.value?.getTracks().forEach(t => t.stop());
-    localStream.value = null;
-    isEnabled.value = false;
-    isMuted.value = false;
-    isCamOff.value = false;
-
+const renegotiate = async () => {
     for (const [remoteId, entry] of Object.entries(peers)) {
         const pc = entry.connection;
         if (pc.signalingState === 'closed') continue;
-        pc.getSenders().filter(s => s.track).forEach(s => pc.removeTrack(s));
         try {
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             socket.emit('webrtc-offer', { to: remoteId, offer });
-        } catch { /* ignore */ }
+        } catch { }
     }
 };
 
-export const toggleMute = () => {
-    const track = localStream.value?.getAudioTracks()[0];
-    if (track) { track.enabled = !track.enabled; isMuted.value = !track.enabled; }
+const joinIfNeeded = (roomId: string) => {
+    if (!webrtcJoined) {
+        socket.emit('webrtc-join', { roomId });
+        webrtcJoined = true;
+    }
 };
 
-export const toggleCam = () => {
-    const track = localStream.value?.getVideoTracks()[0];
-    if (track) { track.enabled = !track.enabled; isCamOff.value = !track.enabled; }
+const cleanupIfEmpty = () => {
+    if (!isAudioEnabled.value && !isCamEnabled.value) {
+        localStream.value = null;
+        webrtcJoined = false;
+    }
+};
+
+export const toggleAudio = async (roomId: string) => {
+    if (isAudioEnabled.value) {
+        localStream.value?.getAudioTracks().forEach(t => { t.stop(); localStream.value?.removeTrack(t); });
+        isAudioEnabled.value = false;
+        cleanupIfEmpty();
+        await renegotiate();
+    } else {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const ls = ensureLocalStream();
+            stream.getAudioTracks().forEach(t => {
+                ls.addTrack(t);
+                Object.values(peers).forEach(({ connection: pc }) => {
+                    if (pc.signalingState !== 'closed') pc.addTrack(t, ls);
+                });
+            });
+            isAudioEnabled.value = true;
+            joinIfNeeded(roomId);
+            await renegotiate();
+        } catch { }
+    }
+};
+
+export const toggleCam = async (roomId: string) => {
+    if (isCamEnabled.value) {
+        localStream.value?.getVideoTracks().forEach(t => { t.stop(); localStream.value?.removeTrack(t); });
+        isCamEnabled.value = false;
+        cleanupIfEmpty();
+        await renegotiate();
+    } else {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            const ls = ensureLocalStream();
+            stream.getVideoTracks().forEach(t => {
+                ls.addTrack(t);
+                Object.values(peers).forEach(({ connection: pc }) => {
+                    if (pc.signalingState !== 'closed') pc.addTrack(t, ls);
+                });
+            });
+            isCamEnabled.value = true;
+            joinIfNeeded(roomId);
+            await renegotiate();
+        } catch { }
+    }
 };
 
 if (import.meta.client) {
@@ -157,9 +181,11 @@ socket.on('webrtc-user-left', ({ from }: { from: string }) => closePeer(from));
 socket.on('disconnect', () => {
     localStream.value?.getTracks().forEach(t => t.stop());
     localStream.value = null;
+    isAudioEnabled.value = false;
+    isCamEnabled.value = false;
+    webrtcJoined = false;
     Object.keys(peers).forEach(closePeer);
     enabledPeers.clear();
-    isEnabled.value = false;
 });
 
 }

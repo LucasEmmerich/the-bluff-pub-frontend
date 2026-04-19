@@ -55,7 +55,7 @@ export type Room = {
 
 export type BluffResult = {
     bluffed: boolean;
-    loser: { username: string };
+    loser: { id: string; username: string };
     eliminated: boolean;
     gameOver: boolean;
     winner?: { username: string };

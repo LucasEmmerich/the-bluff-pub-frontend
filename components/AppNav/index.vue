@@ -12,7 +12,7 @@
                 :style="route.path === '/patch-notes'
                     ? 'background: rgba(184,134,11,0.18); border: 1px solid rgba(184,134,11,0.5); color: #f0c040;'
                     : 'background: rgba(184,134,11,0.06); border: 1px solid rgba(184,134,11,0.2); color: rgba(184,134,11,0.45);'">
-                v1.1.0
+                v2.0.0
             </NuxtLink>
         </div>
 

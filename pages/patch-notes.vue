@@ -64,6 +64,46 @@ const tagStyle = (tag: Tag) => {
 
 const releases = [
     {
+        version: '2.0.0',
+        date: 'April 19, 2025',
+        label: 'Table Redesign',
+        groups: [
+            {
+                icon: '🎮',
+                title: 'Play',
+                items: [
+                    { tag: 'NEW',      text: 'Give Up — players can bow out of a match mid-game without leaving the room' },
+                    { tag: 'IMPROVED', text: 'Give up preserves the current round for remaining players unless it was the quitter\'s turn' },
+                    { tag: 'IMPROVED', text: 'Revealing phase extended to 5 seconds for better readability' },
+                ],
+            },
+            {
+                icon: '🖥️',
+                title: 'Table UI',
+                items: [
+                    { tag: 'IMPROVED', text: 'Full table layout redesign — Play, LIAR! and Give Up buttons now sit alongside the main player\'s avatar' },
+                    { tag: 'IMPROVED', text: 'Main player cards displayed flat side-by-side instead of fanned' },
+                    { tag: 'IMPROVED', text: 'Avatar sizes increased across all player counts for better camera visibility' },
+                    { tag: 'IMPROVED', text: 'Opponent card sizes increased' },
+                ],
+            },
+            {
+                icon: '📷',
+                title: 'WebRTC',
+                items: [
+                    { tag: 'IMPROVED', text: 'Microphone and camera are now independent toggles — enable either or both at any time' },
+                ],
+            },
+            {
+                icon: '🌐',
+                title: 'General',
+                items: [
+                    { tag: 'IMPROVED', text: 'Rules page updated — Give Up mechanic documented, "Bluff!" renamed to "LIAR!" throughout, camera/mic tip added' },
+                ],
+            },
+        ],
+    },
+    {
         version: '1.1.0',
         date: 'April 15, 2025',
         label: 'Gameplay Polish',

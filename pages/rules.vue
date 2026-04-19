@@ -47,6 +47,7 @@
 
                 <p class="font-body text-pub-cream/50 text-sm text-center italic mt-8">
                     The deck has 6 Kings, 6 Queens, 6 Jacks and 2 Jokers — 20 cards total.
+                    Supports <strong class="text-pub-cream not-italic">2 to 4 players</strong>.
                 </p>
             </div>
         </section>
@@ -76,7 +77,7 @@
 
                     <StepCard :step="4" title="Accuse or Trust">
                         After each play, any player — on <strong class="text-pub-cream">their turn</strong>
-                        — can shout <strong class="text-pub-gold">"Bluff!"</strong> and reveal the table cards.
+                        — can shout <strong class="text-pub-gold">"LIAR!"</strong> and reveal the table cards.
                         Or they can play their own cards and continue the round.
                     </StepCard>
                 </div>
@@ -86,10 +87,10 @@
         <section class="relative py-24 px-6">
             <div class="max-w-3xl mx-auto">
 
-                <SectionTitle>Calling the Bluff</SectionTitle>
+                <SectionTitle>Calling LIAR!</SectionTitle>
 
                 <p class="font-body text-pub-cream/60 text-center mt-4 mb-12">
-                    When someone shouts <span class="text-pub-gold italic">"Bluff!"</span>, the table cards are revealed.
+                    When someone shouts <span class="text-pub-gold italic">"LIAR!"</span>, the table cards are revealed.
                 </p>
 
                 <div class="grid md:grid-cols-2 gap-6">
@@ -117,6 +118,16 @@
                 <p class="font-body text-pub-cream/40 text-xs text-center italic mt-8">
                     After the reveal, a new round begins with cards redistributed to all players.
                 </p>
+
+                <div class="mt-10 p-6 rounded-xl flex flex-col items-center gap-3"
+                    style="background: rgba(160,10,10,0.08); border: 1px solid rgba(220,50,50,0.25);">
+                    <div class="text-4xl">🏳️</div>
+                    <h3 class="font-pub text-red-400 text-center text-lg tracking-wide">Give Up</h3>
+                    <p class="font-body text-pub-cream/60 text-sm text-center leading-relaxed max-w-sm">
+                        Can't go on? Hit <strong class="text-pub-cream">Give Up</strong> to bow out of the match.
+                        You stay in the room — but you're eliminated. The game carries on without you.
+                    </p>
+                </div>
             </div>
         </section>
 
@@ -164,11 +175,11 @@
         </section>
 
         <section class="relative py-24 px-6">
-            <div class="max-w-3xl mx-auto">
+            <div class="max-w-5xl mx-auto">
 
                 <SectionTitle>Quick Tips</SectionTitle>
 
-                <div class="mt-12 grid md:grid-cols-3 gap-5">
+                <div class="mt-12 grid md:grid-cols-4 gap-5">
                     <TipCard icon="🃏" title="Save the Joker">
                         The Joker is your most powerful card. Use it when your hand is weak
                         and you need to bluff with confidence.
@@ -177,8 +188,11 @@
                         How many cards does each player have? Someone who plays too fast may be
                         very confident — or scared.
                     </TipCard>
+                    <TipCard icon="🎭" title="Use Your Face">
+                        Turn on your mic and camera to sell the lie. Or stay silent and let them wonder.
+                    </TipCard>
                     <TipCard icon="⏱️" title="Watch the Clock">
-                        Each turn has a time limit. Anyone who neither plays nor calls bluff
+                        Each turn has a time limit. Anyone who neither plays nor calls LIAR!
                         automatically loses a life.
                     </TipCard>
                 </div>

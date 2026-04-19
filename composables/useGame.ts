@@ -65,51 +65,73 @@ export const dropCards = (callLiar: boolean) => {
         liarCall: callLiar
     };
     if (callLiar) {
+        bluffCallerId.value = _room.mainPlayer.id ?? null;
         callBluffAnimation(() => socket.emit('drop-cards', { room: _room, move }));
     } else {
         dropCardsAnimation(() => socket.emit('drop-cards', { room: _room, move }));
     }
 };
 
-const OTHER_ANGLES: Record<number, number[]> = {
-    2: [270],
-    3: [215, 325],
-    4: [180, 270, 360],
-    5: [180, 225, 315, 360],
+export const giveUpPlayerId = ref<string | null>(null);
+
+export const giveUp = () => {
+    giveUpPlayerId.value = _room.mainPlayer.id ?? null;
+    socket.emit('give-up', { room: { id: _room.id }, playerId: _room.mainPlayer.id });
+};
+
+export const TABLE_RX = 46;
+export const TABLE_RY = 46;
+
+export const bluffCallerId = ref<string | null>(null);
+
+export const getOpponentAngles = (count: number): number[] => {
+    if (count === 0) return [];
+    if (count === 1) return [270];
+    if (count === 2) return [210, 330];
+    if (count === 3) return [180, 270, 0];
+    const arcStart = 130;
+    const arcEnd = 410;
+    return Array.from({ length: count }, (_, i) => arcStart + ((arcEnd - arcStart) / (count - 1)) * i);
 };
 
 const isSpectator = () => !_game.hands.some(h => h.player.id === _room.mainPlayer.id);
 
 export const handPosition = (pl: Hand): Record<string, string> => {
     if (pl.player.id === _room.mainPlayer.id) {
-        return { left: '50%', top: '88%', transform: 'translate(-50%, -50%)' };
+        return { left: '50%', top: '100%', transform: 'translate(-50%, -50%)' };
     }
 
-    const total = _game.hands.length;
     const spectator = isSpectator();
     const pool = spectator ? _game.hands : _game.hands.filter(x => x.player.id !== _room.mainPlayer.id);
     const idx = pool.findIndex(x => x.player.id === pl.player.id);
-    const angleKey = spectator ? total + 1 : total;
-    const angles = OTHER_ANGLES[angleKey] ?? OTHER_ANGLES[5];
+    const angles = getOpponentAngles(pool.length);
     const deg = angles[idx] ?? 270;
 
     const rad = (deg * Math.PI) / 180;
     return {
-        left: `${50 + 40 * Math.cos(rad)}%`,
-        top: `${50 + 40 * Math.sin(rad)}%`,
+        left: `${50 + TABLE_RX * Math.cos(rad)}%`,
+        top: `${50 + TABLE_RY * Math.sin(rad)}%`,
         transform: 'translate(-50%, -50%)',
     };
+};
+
+export const handFlip = (pl: Hand): boolean => {
+    if (pl.player.id === _room.mainPlayer.id) return false;
+    const pool = _game.hands.filter(x => x.player.id !== _room.mainPlayer.id);
+    const idx = pool.findIndex(x => x.player.id === pl.player.id);
+    const angles = getOpponentAngles(pool.length);
+    const deg = angles[idx] ?? 270;
+    const rad = (deg * Math.PI) / 180;
+    return Math.cos(rad) > 0.2;
 };
 
 export const handRotation = (pl: Hand): number => {
     if (pl.player.id === _room.mainPlayer.id) return 0;
 
-    const total = _game.hands.length;
     const spectator = isSpectator();
     const pool = spectator ? _game.hands : _game.hands.filter(x => x.player.id !== _room.mainPlayer.id);
     const idx = pool.findIndex(x => x.player.id === pl.player.id);
-    const angleKey = spectator ? total + 1 : total;
-    const angles = OTHER_ANGLES[angleKey] ?? OTHER_ANGLES[5];
+    const angles = getOpponentAngles(pool.length);
     const deg = angles[idx] ?? 270;
     return deg - 90;
 };
@@ -136,7 +158,7 @@ const tableCardsAnimation = (table: any) => {
 
 const callBluffAnimation = (cb: () => void) => {
     _game.hands.find(x => x.player.id === _room.mainPlayer.id)?.cards.forEach(c => c.selected = false);
-    socket.emit('bluff-intent', { room: { id: _room.id } });
+    socket.emit('bluff-intent', { room: { id: _room.id }, callerId: _room.mainPlayer.id });
 
     const tableCardsEl = document.getElementById('table-cards');
     if (!tableCardsEl) { cb(); return; }
@@ -266,7 +288,7 @@ export const turnTimeLeft = ref(20);
 export const turnDurationS = ref(20);
 let _turnDurationS = 20;
 let _interTurnDelayMs = 2000;
-let _lifeLossRevealMs = 3000;
+let _lifeLossRevealMs = 5000;
 let _bluffCallAnimMs = 2000;
 let _timerInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -332,6 +354,10 @@ socket.on('cards-dropped', game => {
     startCountdown(_interTurnDelayMs);
 });
 
+socket.on('bluff-intent', ({ callerId }: { callerId: string }) => {
+    bluffCallerId.value = callerId ?? null;
+});
+
 socket.on('bluff-called', ({ game, result }: { game: any, result: BluffResult }) => {
     triggerLifeLoss(result.loser.id);
     const bluffEntry = {
@@ -352,6 +378,7 @@ socket.on('bluff-called', ({ game, result }: { game: any, result: BluffResult })
     gamePhase.value = 'revealing';
     _bluffResultHandlers.forEach(h => h(result));
     setTimeout(() => {
+        bluffCallerId.value = null;
         _game.revealing = false;
         _game.turn = game.turn?.username ?? game.turn;
         _game.hands = remapHandImages(orderPlayerTablePosition(game.hands));
@@ -385,6 +412,22 @@ socket.on('turn-timeout', ({ game, result }: { game: any, result: BluffResult })
         _game.matchStarted = !result.gameOver;
         if (result.gameOver) gamePhase.value = 'idle';
         else startCountdown(_interTurnDelayMs);
+    }, _lifeLossRevealMs);
+});
+
+socket.on('player-gave-up', ({ game, result }: { game: any, result: BluffResult }) => {
+    giveUpPlayerId.value = result.loser.id;
+    const e = { type: 'eliminated' as GameLogEntry['type'], text: `${result.loser.username} gave up` };
+    addLog(e);
+    addToast(e, 1800);
+    setTimeout(() => {
+        giveUpPlayerId.value = null;
+        _game.turn = game.turn?.username ?? game.turn;
+        _game.hands = remapHandImages(orderPlayerTablePosition(game.hands));
+        _game.cardType = game.cardType;
+        _game.table = game.table;
+        _game.matchStarted = !result.gameOver;
+        if (result.gameOver) gamePhase.value = 'idle';
     }, _lifeLossRevealMs);
 });
 
