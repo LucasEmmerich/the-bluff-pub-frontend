@@ -1,4 +1,4 @@
 declare type Option = {
-    id: Number,
-    name: String
-}
+    id: number;
+    name: string;
+};

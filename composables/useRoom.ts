@@ -20,41 +20,41 @@ export const copyRoomCodeToClipboard = () => {
 };
 
 export const createRoom = () => {
-    socket.emit('create-room', _room);
+    socket.emit("create-room", _room);
 };
 
 export const joinRoom = () => {
-    socket.emit('join-room', _room);
+    socket.emit("join-room", _room);
 };
 
 if (import.meta.client) {
-    socket.on('room-created', room => {
+    socket.on("room-created", (room) => {
         _room.id = room.id;
         _room.mainPlayer.id = room.roomOwner.id;
         _room.roomOwner = room.roomOwner;
     });
 
-    socket.on('self-joined', (player: Player) => {
+    socket.on("self-joined", (player: Player) => {
         _room.mainPlayer.id = player.id;
     });
 
-    socket.on('player-joined', room => {
+    socket.on("player-joined", (room) => {
         _room.id = room.id;
         _room.players = room.players;
         _room.roomOwner = room.roomOwner;
         if (room.leaderboard) _room.leaderboard = room.leaderboard;
     });
 
-    socket.on('player-left', (room) => {
+    socket.on("player-left", (room) => {
         _room.players = room.players;
         _room.roomOwner = room.roomOwner;
     });
 
-    socket.on('leaderboard-updated', (leaderboard) => {
+    socket.on("leaderboard-updated", (leaderboard) => {
         _room.leaderboard = leaderboard;
     });
 
-    socket.on('disconnect', () => {
+    socket.on("disconnect", () => {
         _room.id = undefined;
         _room.enterRoomId = undefined;
         _room.mainPlayer = { id: undefined, username: undefined, avatar: undefined };

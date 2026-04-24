@@ -27,7 +27,7 @@ export type Move = {
 export type Game = {
     round: number;
     cardTypes: Array<string>;
-    cardType?: 'King' | 'Queen' | 'Jack';
+    cardType?: "King" | "Queen" | "Jack";
     deck: Array<Card>;
     turn?: string;
     matchStarted: boolean;
@@ -58,6 +58,6 @@ export type BluffResult = {
     loser: { id: string; username: string };
     eliminated: boolean;
     gameOver: boolean;
-    winner?: { username: string };
+    winner?: { id: string; username: string };
     tableCards: Array<Card>;
 };

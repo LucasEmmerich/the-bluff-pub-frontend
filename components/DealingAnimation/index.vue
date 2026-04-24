@@ -1,24 +1,27 @@
 <template>
     <Transition name="dealing-overlay">
-        <div v-if="dealingActive" class="absolute inset-0 pointer-events-none" style="z-index: 30;">
-
+        <div v-if="dealingActive" class="absolute inset-0 pointer-events-none" style="z-index: 30">
             <div ref="containerRef" class="absolute inset-0">
                 <img
-                    v-for="card in flyingCards" :key="card.id"
-                    :ref="el => { if (el) cardEls[card.id] = el as HTMLElement }"
+                    v-for="card in flyingCards"
+                    :key="card.id"
+                    :ref="
+                        (el) => {
+                            if (el) cardEls[card.id] = el as HTMLElement;
+                        }
+                    "
                     :src="CARD_IMAGES.no_card"
                     class="rounded-md shadow-2xl ring-1 ring-pub-gold/30"
-                    style="position: absolute; width: 4.5rem; height: 6.4rem; object-fit: cover; opacity: 0;"
+                    style="position: absolute; width: 4.5rem; height: 6.4rem; object-fit: cover; opacity: 0"
                 />
             </div>
-
         </div>
     </Transition>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue';
-import { CARD_IMAGES, dealingActive, TABLE_RX, TABLE_RY, getOpponentAngles } from '~/composables/useGame';
+import { ref, watch, nextTick } from "vue";
+import { CARD_IMAGES, dealingActive, TABLE_RX, TABLE_RY, getOpponentAngles } from "~/composables/useGame";
 
 const _game = useGame();
 const _room = useRoom();
@@ -39,7 +42,7 @@ const flyingCards = computed(() => {
 });
 
 const getPlayerCenter = (index: number, containerRect: DOMRect) => {
-    const tableEl = document.getElementById('felt-table');
+    const tableEl = document.getElementById("felt-table");
     const tableRect = tableEl?.getBoundingClientRect();
     const fallback = { x: containerRect.width / 2, y: containerRect.height / 2 };
 
@@ -54,8 +57,8 @@ const getPlayerCenter = (index: number, containerRect: DOMRect) => {
     const isMain = hand.player.id === _room.mainPlayer.id;
     if (isMain) return { x: tL + tW * 0.5, y: tT + tH * (0.5 + TABLE_RY / 100) };
 
-    const others = _game.hands.filter(h => h.player.id !== _room.mainPlayer.id);
-    const otherIndex = others.findIndex(h => h.player.id === hand.player.id);
+    const others = _game.hands.filter((h) => h.player.id !== _room.mainPlayer.id);
+    const otherIndex = others.findIndex((h) => h.player.id === hand.player.id);
     const angles = getOpponentAngles(others.length);
     const deg = angles[otherIndex] ?? 270;
     const rad = (deg * Math.PI) / 180;
@@ -93,16 +96,22 @@ watch(dealingActive, async (active) => {
 
         const delay = 200 + i * 180;
 
-        el.animate([
-            { opacity: 0,   transform: 'translate(0, 0) scale(0.75) rotate(-8deg)' },
-            { opacity: 1,   transform: 'translate(0, 0) scale(1.05) rotate(0deg)', offset: 0.08 },
-            { opacity: 1,   transform: `translate(${dx}px, ${dy}px) scale(0.9) rotate(${(Math.random() - 0.5) * 16}deg)` },
-        ], {
-            duration: 750,
-            delay,
-            easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
-            fill: 'forwards',
-        });
+        el.animate(
+            [
+                { opacity: 0, transform: "translate(0, 0) scale(0.75) rotate(-8deg)" },
+                { opacity: 1, transform: "translate(0, 0) scale(1.05) rotate(0deg)", offset: 0.08 },
+                {
+                    opacity: 1,
+                    transform: `translate(${dx}px, ${dy}px) scale(0.9) rotate(${(Math.random() - 0.5) * 16}deg)`,
+                },
+            ],
+            {
+                duration: 750,
+                delay,
+                easing: "cubic-bezier(0.22, 0.61, 0.36, 1)",
+                fill: "forwards",
+            }
+        );
     });
 });
 </script>
